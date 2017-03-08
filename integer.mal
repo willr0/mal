@@ -1,0 +1,146 @@
+#p5a
+
+		.data
+	
+prompt:	 	.asciiz 	"Type an Integer "
+nl:		.asciiz 	"\n"
+num0:		.asciiz		"Number of 0s: "
+num1:		.asciiz		"Number of 1s: "
+num2:		.asciiz		"Highest power of two that evenly divides: "
+num3:		.asciiz		"Smallest digit: "
+counter1:	.word		16
+counter2:	.word		32
+		
+		.text
+               	.globl		main
+
+
+main:	la	$a0, prompt	#loads prompt into reg. $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+	li	 $v0, 5		#system call code for read_int
+	syscall
+	
+	lw	$t0, counter1	#loads counter1 variable into $t0
+	move	$t2, $v0	#copies the content inputted by user into $t2	
+	lw	$t3, counter2	#loads counter2 variable into $t3 (b)
+	move	$t4, $v0	#copies the content inputter by user into $t4
+	li	$s8, 9		#for highest possible digit in smallest digit test (d)
+	move 	$s7, $0		#highest power variable (c)
+	move	$s6, $0		#remainder variable (d)
+	li	$s5, 2		#$s5 holds 2 
+	move	$s4, $0		#$s4 will contain the number of loops (a,b)
+	move	$s3, $0		#$s3 will hold number of 0 in right half (a)
+	move	$s2, $0		#$s2 will hold number of 1 in left half (b)
+	li	$s1, 1		#$s1 will hold 1 for testing (a)
+
+
+loop0:				#part (c)
+	
+	andi	$t1, $t2, 1	#checks if LSB is 0 or 1
+	add	$t1, $t1, $0
+
+	beq	$t1, $s1, loop	#if 1, exit loop0, else
+	addi	$s7, $s7, 1	#increment bit position
+	addi	$s3, $s3, 1	#increment number of 0s
+	div	$t2, $t2, $s5	#divides by 2 to shift the bits right by one
+	addi	$s4, $s4, 1	#increments at the end of each loop
+	j	loop0
+
+loop:	beq	$s4, $t0, loop2 #if $s4==$t0(16) go to end (a)
+	andi	$t1, $t2, 1	#checks if LSB is 0 or 1
+	add	$t1, $t1, $0
+
+	bne	$t1, $0, nzero 	#checks to see whether $t1 == 0, if not, then it skips counter and branches
+	addi	$s3, $s3, 1 	#increments if 0s are found
+
+nzero:	div	$t2, $t2, $s5	#divides by 2 to shift the bits right by one
+	addi	$s4, $s4, 1	#increments at the end of each loop
+	j	loop
+
+loop2:	beq	$s4, $t3, loop3 #if $s4==$t3(32) go to end (b)
+	andi	$t1, $t2, 1	#checks if LSB is 0 or 1
+	add	$t1, $t1, $0
+
+	bne	$t1, $s1, none 	#checks to see whether $t1 == 1, if not, then it skips counter and branches
+	addi	$s2, $s2, 1 	#increments if 1s are found
+none:	div	$t2, $t2, $s5	#divides by 2 to shift the bits right by one
+	addi	$s4, $s4, 1	#increments at the end of each loop
+	j	loop2
+
+loop3:				#part (d)
+	rem	$s6, $t4, 10	#parse digits out of number
+	div	$t4, $t4, 10	#move to next digit
+
+	blt	$s8, $s6, cont	#if current digit less than smallest,
+	move	$s8, $s6	#copy current digit to $s8
+
+cont:	beq	$t4, $0, end	#exit loop when number divides to zero
+	j	loop3
+	 
+
+#outputs the $s0 reg.
+
+end:	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+	la 	$a0, num0	#loads string into $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+
+	move	$a0, $s3	#$a0 will hold value of $s3
+	li	$v0, 1		#system call code for print_int
+	syscall	
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+	
+	la 	$a0, num1	#loads string into $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+
+	move	$a0, $s2	#$a0 will hold value of $s2
+	li	$v0, 1		#system call code for print_int
+	syscall	
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+	la 	$a0, num2	#loads string into $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+
+	move	$a0, $s7	#$a0 will hold value of $s7
+	li	$v0, 1		#system call code for print_int
+	syscall	
+
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+
+	la 	$a0, num3	#loads string into $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+
+	move	$a0, $s8	#$a0 will hold value of $s8
+	li	$v0, 1		#system call code for print_int
+	syscall	
+
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+
+	li	$v0, 10		#exit
+	syscall

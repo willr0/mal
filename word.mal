@@ -1,0 +1,214 @@
+#p5b
+#will roller
+		.data
+temparray:	.space		80
+max:		.space		80
+min:		.space		80
+str:		.space		80
+prompt:	 	.asciiz 	"Enter sentence "
+nl:		.asciiz 	"\n"
+error:		.asciiz		"Line contains only whitespace characters."
+num0:		.asciiz		"Number of non-whitespace characters: "
+num1:		.asciiz		"Number of words: "
+num2:		.asciiz		"Max length of a word: "
+num3:		.asciiz		"Min length of a word: "
+num4:		.asciiz		"Word of maximum length: "
+num5:		.asciiz		"Word of minimum length: "
+ws0:		.byte		' '
+		
+		.text
+               	.globl		main
+
+
+main:	la	$a0, prompt	#loads prompt into reg. $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+	la	$a0, str
+	li	$a1, 80
+       	li 	$v0,8 		#take in input
+	syscall
+
+	la	$a0, str
+       move 	$t0, $a0 	#save string to t0
+
+	lb	$t1, ws0	#whitespace test " "
+	move	$t2, $0		#char count
+	la	$t3, str	#whitespace test "\t"
+	la	$t4, temparray	#current word
+	move	$t5, $0		#temp variable for chars
+	move	$t6, $0		#space test
+	move	$s0, $0		#counter for non-whitespace
+	move	$s1, $0		#counter for words
+	move	$s2, $0		#counter for max length
+	li	$s3, 9		#counter for min length
+	
+loop0: lb	$t5, 0($t0)	#current char
+	beq	$t5, $t1, blank	#" "
+	beq	$t5, 10, blank	#”\n” 
+	beq	$t5, 11, blank	#”\n”
+
+loop:	lb	$t5, 0($t0)	#read first char
+	beqz	$t5, test 	#end of sentence	
+	beq	$t5, $t1, space	#" " 
+	beq	$t5, 10, space	#"\n" 
+	beq	$t5, 11, space	#"\n" 
+
+
+	addi	$s0, $s0, 1	#increment non-whitespace (a)
+	lb	$t7, 0($t0)	#stores char in temp reg
+	sb	$t7, 0($t4)	#stores char in temp array
+	addi	$t4, $t4, 1	#moves pointer to the next spot in array
+	sb	$0 , 0($t4)
+	j	char
+
+space:	addi	$s1, $s1, 1
+	blt	$t2, $s2, nlt	#current < saved, NOT MAX
+	move	$s2, $t2	#current > saved, MAX
+	la	$t4, temparray	#loads temp array into $t4
+	la	$s4, max	#loads array to hold biggest word into $s4
+while0:	lb	$t7, 0($t4)	#load char into temp reg $t7
+	beqz	$t7, reset	#if $t7 == 0, branch to reset
+	sb	$t7, 0($s4)	#store char from $t7 into max array
+	addi	$t4, $t4, 1	#move pointer for temp array up
+	addi	$s4, $s4, 1	#move pointer for max array up
+	sb	$0 , 0($s4)
+	j	while0		#branch back to while0
+
+reset:	move	$t7, $0		#reset $t7
+	la	$t4, temparray	#reset pointer
+
+nlt:	blt 	$s3, $t2, ngt	#current > saved, NOT MIN
+	move	$s3, $t2	#current < saved, MIN
+	la	$t4, temparray	#load tamp array into $t4
+	la	$s5, min	#load array to hold smallest word into $s5
+while:	lb	$t7, 0($t4)	#load char from temp array to $t7
+	beqz	$t7, ngt	#if $t7 == 0, branch to ngt
+	sb	$t7, 0($s5)	#store char from $t7 into min array
+	addi	$t4, $t4, 1	#move pointer up
+	addi	$s5, $s5, 1	#move pointer up
+	sb	$0 , 0($s5)
+	j	while		#branch back to while
+
+ngt:	move	$t2, $0		#reset char
+	la	$t4, temparray	#reset pointer of array
+	move	$t7, $0		#reset $t7
+
+
+check:	addi	$t0, $t0, 1	#next char
+	lb	$t6, 0($t0)	#blank space check
+	beq	$t6, $t1, blank#" "
+	beq	$t6, 10, blank	#”\n” 
+	beq	$t6, 11, blank	#”\n”
+	j	loop
+blank:	j 	check		#skip extra spaces
+
+
+char:	addi	$t2, $t2, 1	#increment char count
+	addi	$t0, $t0, 1	#increment array index
+	j	loop
+
+test:	bne	$s1, $0, end	#checks if blank line	
+	la 	$a0, error	#prints error
+	li	$v0, 4		
+	syscall
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+	j	exit		#exit
+
+end:	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+	la 	$a0, num0	#loads string into $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+
+	move	$a0, $s0	#$a0 will hold value of $s0
+	li	$v0, 1		#system call code for print_int
+	syscall	
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+	
+	la 	$a0, num1	#loads string into $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+
+	move	$a0, $s1	#$a0 will hold value of $s1
+	li	$v0, 1		#system call code for print_int
+	syscall	
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+	la 	$a0, num2	#loads string into $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+
+	move	$a0, $s2	#$a0 will hold value of $s2
+	li	$v0, 1		#system call code for print_int
+	syscall	
+
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+
+	la 	$a0, num3	#loads string into $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+
+	move	$a0, $s3	#$a0 will hold value of $s3
+	li	$v0, 1		#system call code for print_int
+	syscall	
+
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+
+	la 	$a0, num4	#loads string into $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+
+	la	$a0, max	#$a0 will hold value of $s3
+	li	$v0, 4		#system call code for print_int
+	syscall	
+
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+
+
+	la 	$a0, num5	#loads string into $a0
+	li	$v0, 4		#system call code for print_string
+	syscall
+
+
+	la	$a0, min	#$a0 will hold value of $s3
+	li	$v0, 4		#system call code for print_int
+	syscall	
+
+
+	la	$a0, nl
+	li	$v0, 4
+	syscall
+
+
+exit:	li	$v0, 10		#exit
+	syscall
